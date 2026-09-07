@@ -627,3 +627,11 @@ export const DEMO_USER = {
   role: "Market Entry Lead",
   initials: "AO",
 };
+
+/* -------------------------------------------------------------------------- */
+/*  Module 2 & 3 data — kept in their own files, re-exported here so           */
+/*  lib/mock-data.ts remains the single import surface for mock content.       */
+/* -------------------------------------------------------------------------- */
+
+export * from "./mock-funding";
+export * from "./mock-diaspora";

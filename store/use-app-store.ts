@@ -3,9 +3,12 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type {
+  ApplicationStatus,
   ChatMessage,
   ChecklistItem,
   Company,
+  FundingApplication,
+  FundingProgram,
   LicenceItem,
   ProvinceCode,
 } from "@/lib/types";
@@ -17,6 +20,10 @@ interface AppState {
   messages: ChatMessage[];
   /** Partner ids the user has requested an introduction to. */
   requestedIntros: string[];
+  /** Module 2 — funding programs the user is tracking. */
+  fundingApplications: FundingApplication[];
+  /** Module 3 — diaspora organisation and mentor ids the user has reached out to. */
+  connections: string[];
   /** Zustand persist rehydration flag — guards against SSR/client markup mismatch. */
   hasHydrated: boolean;
 
@@ -34,6 +41,14 @@ interface AppState {
 
   requestIntro: (partnerId: string) => void;
 
+  trackProgram: (program: FundingProgram) => void;
+  untrackProgram: (programId: string) => void;
+  setApplicationStatus: (programId: string, status: ApplicationStatus) => void;
+  isTrackingProgram: (programId: string) => boolean;
+
+  requestConnection: (id: string) => void;
+  hasConnection: (id: string) => boolean;
+
   setHasHydrated: (value: boolean) => void;
 }
 
@@ -44,11 +59,20 @@ export const useAppStore = create<AppState>()(
       checklist: [],
       messages: [],
       requestedIntros: [],
+      fundingApplications: [],
+      connections: [],
       hasHydrated: false,
 
       setCompany: (company) => set({ company }),
       resetCompany: () =>
-        set({ company: null, checklist: [], messages: [], requestedIntros: [] }),
+        set({
+          company: null,
+          checklist: [],
+          messages: [],
+          requestedIntros: [],
+          fundingApplications: [],
+          connections: [],
+        }),
 
       addChecklistItem: (licence) => {
         if (get().checklist.some((i) => i.licenceId === licence.id)) return;
@@ -104,6 +128,45 @@ export const useAppStore = create<AppState>()(
             : { requestedIntros: [...state.requestedIntros, partnerId] },
         ),
 
+      trackProgram: (program) => {
+        if (get().fundingApplications.some((a) => a.programId === program.id)) return;
+        const now = new Date().toISOString();
+        set((state) => ({
+          fundingApplications: [
+            ...state.fundingApplications,
+            { programId: program.id, status: "not-started", addedAt: now, updatedAt: now },
+          ],
+        }));
+      },
+
+      untrackProgram: (programId) =>
+        set((state) => ({
+          fundingApplications: state.fundingApplications.filter(
+            (a) => a.programId !== programId,
+          ),
+        })),
+
+      setApplicationStatus: (programId, status) =>
+        set((state) => ({
+          fundingApplications: state.fundingApplications.map((a) =>
+            a.programId === programId
+              ? { ...a, status, updatedAt: new Date().toISOString() }
+              : a,
+          ),
+        })),
+
+      isTrackingProgram: (programId) =>
+        get().fundingApplications.some((a) => a.programId === programId),
+
+      requestConnection: (id) =>
+        set((state) =>
+          state.connections.includes(id)
+            ? state
+            : { connections: [...state.connections, id] },
+        ),
+
+      hasConnection: (id) => get().connections.includes(id),
+
       setHasHydrated: (value) => set({ hasHydrated: value }),
     }),
     {
@@ -151,4 +214,30 @@ export function computeReadinessScore(
 /** Province codes the user selected, used to scope Guide and Checklist views. */
 export function selectTargetProvinces(company: Company | null): ProvinceCode[] {
   return company?.targetProvinces ?? [];
+}
+
+/* --------------------- Module 2 — funding selectors --------------------- */
+
+/**
+ * Total funding identified. Uses the midpoint of each program's range so a
+ * single very large program does not dominate the headline figure.
+ */
+export function sumFundingMidpoints(programs: FundingProgram[]): number {
+  return programs.reduce((total, p) => total + (p.minAmount + p.maxAmount) / 2, 0);
+}
+
+export function selectFundingProgress(applications: FundingApplication[]) {
+  const tracked = applications.length;
+  const submitted = applications.filter(
+    (a) => a.status === "submitted" || a.status === "awarded",
+  ).length;
+  const awarded = applications.filter((a) => a.status === "awarded").length;
+  return { tracked, submitted, awarded };
+}
+
+export function groupApplicationsByStatus(applications: FundingApplication[]) {
+  return applications.reduce<Record<string, FundingApplication[]>>((acc, app) => {
+    (acc[app.status] ??= []).push(app);
+    return acc;
+  }, {});
 }

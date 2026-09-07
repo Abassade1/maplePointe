@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, ListTodo, Sparkles } from "lucide-react";
+import { ArrowRight, Banknote, ListTodo, Sparkles } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,8 +15,11 @@ import {
   useAppStore,
   computeReadinessScore,
   selectChecklistProgress,
+  sumFundingMidpoints,
 } from "@/store/use-app-store";
 import { getLicencesForProvince, getProvince } from "@/lib/mock-data";
+import { getRealisticPrograms } from "@/lib/mock-funding";
+import { formatCurrency } from "@/lib/utils";
 
 export function DashboardOverview() {
   const loading = useSimulatedLoading();
@@ -43,6 +46,11 @@ function DashboardContent() {
     .flatMap((code) => getLicencesForProvince(code))
     .filter((l) => l.status === "required").length;
 
+  // Module 2 headline. Uses the realistic subset — the very large industrial
+  // funds would otherwise dominate and overstate what this profile can reach.
+  const relevantPrograms = getRealisticPrograms(company.targetProvinces);
+  const fundingIdentified = sumFundingMidpoints(relevantPrograms);
+
   const nextStep = determineNextStep({ checklistCount: total, openItems });
 
   return (
@@ -61,7 +69,7 @@ function DashboardContent() {
         </Button>
       </PageHeader>
 
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
         <ReadinessCard score={readiness} />
 
         <Card>
@@ -81,6 +89,30 @@ function DashboardContent() {
             <Button asChild variant="link" className="mt-3 h-auto p-0">
               <Link href={total === 0 ? "/dashboard/guide" : "/dashboard/checklist"}>
                 {total === 0 ? "Review requirements" : "Open checklist"}
+                <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <Banknote className="h-4 w-4 text-navy-600" aria-hidden="true" />
+              <CardTitle className="text-base">Funding identified</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-4xl font-semibold tabular-nums text-navy-800">
+              {formatCurrency(fundingIdentified)}
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              Across {relevantPrograms.length} federal and provincial programmes realistically
+              open to your profile.
+            </p>
+            <Button asChild variant="link" className="mt-3 h-auto p-0">
+              <Link href="/dashboard/funding">
+                View funding matches
                 <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
               </Link>
             </Button>
@@ -146,7 +178,7 @@ function DashboardContent() {
         </CardContent>
       </Card>
 
-      <h2 className="mb-4 mt-10 text-lg font-semibold text-navy-800">Jump back in</h2>
+      <h2 className="mb-4 mt-10 text-lg font-semibold text-navy-800">Your modules</h2>
       <QuickLinks />
     </div>
   );
@@ -178,10 +210,10 @@ function determineNextStep({
   }
   if (openItems === 0) {
     return {
-      title: "Start partner conversations",
-      body: "Your tracked items are all complete. The next constraint is usually distribution — review your matched partners and request introductions.",
-      cta: "View partner matches",
-      href: "/dashboard/partners",
+      title: "Line up your funding",
+      body: "Your tracked compliance items are complete, which means you now meet the Canadian-entity test most programmes require. Review the grants and credits open to you.",
+      cta: "View funding matches",
+      href: "/dashboard/funding",
     };
   }
   return {
@@ -197,8 +229,8 @@ function DashboardSkeleton() {
     <div>
       <Skeleton className="h-9 w-80" />
       <Skeleton className="mt-3 h-5 w-96" />
-      <div className="mt-8 grid gap-5 lg:grid-cols-3">
-        {[0, 1, 2].map((i) => (
+      <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+        {[0, 1, 2, 3].map((i) => (
           <Card key={i}>
             <CardHeader className="pb-3">
               <Skeleton className="h-5 w-40" />

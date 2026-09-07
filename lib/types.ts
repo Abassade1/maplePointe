@@ -101,3 +101,130 @@ export interface Company {
   /** ISO timestamp set when onboarding is submitted. */
   completedAt: string;
 }
+
+/* -------------------------------------------------------------------------- */
+/*  Module 2 — Funding Copilot                                                 */
+/* -------------------------------------------------------------------------- */
+
+export type FundingType =
+  | "grant"
+  | "loan"
+  | "tax-credit"
+  | "wage-subsidy"
+  | "export-financing";
+
+export type FundingLevel = "federal" | "provincial";
+
+export type Competitiveness = "low" | "moderate" | "high";
+
+export interface FundingProgram {
+  id: string;
+  name: string;
+  provider: string;
+  type: FundingType;
+  level: FundingLevel;
+  /** Present only for provincial programs. */
+  province?: ProvinceCode;
+  /** Amounts in CAD. */
+  minAmount: number;
+  maxAmount: number;
+  description: string;
+  /** Plain-language eligibility criteria shown as a list. */
+  eligibility: string[];
+  /**
+   * Most Canadian programs require a Canadian-incorporated entity, which ties
+   * this module back to the registration items in the Module 1 checklist.
+   */
+  requiresCanadianEntity: boolean;
+  applicationWindow: string;
+  typicalDecisionTime: string;
+  competitiveness: Competitiveness;
+  /** Mock 0–100 fit score against the onboarding profile. */
+  matchScore: number;
+}
+
+export type ApplicationStatus =
+  | "not-started"
+  | "preparing"
+  | "submitted"
+  | "awarded"
+  | "declined";
+
+export interface FundingApplication {
+  /** Mirrors the source FundingProgram id. */
+  programId: string;
+  status: ApplicationStatus;
+  /** ISO timestamps. */
+  addedAt: string;
+  updatedAt: string;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Module 3 — Diaspora Bridge                                                 */
+/* -------------------------------------------------------------------------- */
+
+export interface DiasporaProvinceShare {
+  province: ProvinceCode;
+  /** Percentage of the community living in this province. */
+  share: number;
+  metro: string;
+}
+
+export interface DiasporaCommunity {
+  /** Matches Company.homeCountry, or "default" for the generic fallback. */
+  country: string;
+  populationEstimate: number;
+  provinceShares: DiasporaProvinceShare[];
+  languages: string[];
+  /** 2 paragraphs of market-relevant context. */
+  insight: string[];
+}
+
+export type DiasporaOrgType =
+  | "chamber"
+  | "business-network"
+  | "cultural-association"
+  | "incubator";
+
+export interface DiasporaOrganization {
+  id: string;
+  name: string;
+  type: DiasporaOrgType;
+  /** Home country served, or "multi" for pan-diaspora organisations. */
+  country: string;
+  province: ProvinceCode;
+  city: string;
+  blurb: string;
+  memberCount: number;
+  focusAreas: string[];
+}
+
+export interface DiasporaMentor {
+  id: string;
+  name: string;
+  role: string;
+  company: string;
+  homeCountry: string;
+  province: ProvinceCode;
+  city: string;
+  yearsInCanada: number;
+  blurb: string;
+  expertise: string[];
+  languages: string[];
+  matchScore: number;
+}
+
+export type EventFormat = "in-person" | "virtual" | "hybrid";
+
+export interface DiasporaEvent {
+  id: string;
+  title: string;
+  /** Days from today, so demo dates never go stale. */
+  daysFromNow: number;
+  city: string;
+  province: ProvinceCode;
+  format: EventFormat;
+  host: string;
+  country: string;
+  description: string;
+}

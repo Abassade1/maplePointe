@@ -46,15 +46,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         {/* Desktop sidebar */}
         <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 shrink-0 overflow-y-auto border-r border-slate-200 bg-white px-4 py-6 lg:block">
           <DashboardNav />
-          <div className="mt-8 rounded-lg border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Coming soon
-            </p>
-            <ul className="mt-3 space-y-2 text-sm text-slate-400">
-              <li>Funding Copilot</li>
-              <li>Diaspora Bridge</li>
-            </ul>
-          </div>
         </aside>
 
         <main id="main-content" className="min-w-0 flex-1 px-4 py-8 sm:px-6 lg:px-8">

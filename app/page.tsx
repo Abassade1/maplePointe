@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/landing/site-header";
 import { SiteFooter } from "@/components/landing/site-footer";
 import { HowItWorks } from "@/components/landing/how-it-works";
+import { Modules } from "@/components/landing/modules";
 import { SocialProof } from "@/components/landing/social-proof";
 
 const HERO_STATS = [
@@ -24,7 +25,7 @@ export default function LandingPage() {
             <div className="lg:col-span-7">
               <p className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600">
                 <span className="h-1.5 w-1.5 rounded-full bg-teal-500" aria-hidden="true" />
-                Module 1 · Market-Entry Navigator
+                Three modules · One guided path
               </p>
               <h1 className="mt-6 text-balance text-4xl font-semibold leading-[1.1] tracking-tight text-navy-800 sm:text-5xl lg:text-6xl">
                 Entering Canada should not take six consultants and nine months.
@@ -94,6 +95,7 @@ export default function LandingPage() {
         </section>
 
         <HowItWorks />
+        <Modules />
         <SocialProof />
 
         {/* Closing CTA */}
