@@ -10,6 +10,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import type { Dictionary } from "./i18n/dictionaries/en";
 
 export interface NavItem {
   href: string;
@@ -19,102 +20,62 @@ export interface NavItem {
 }
 
 export interface NavGroup {
-  /** Undefined for the ungrouped items at the top of the sidebar. */
   label?: string;
-  /** Short module descriptor shown on the dashboard module cards. */
   blurb?: string;
   icon?: LucideIcon;
   items: NavItem[];
 }
 
 /**
- * Navigation is grouped by product module. Adding a module means adding a
- * group here and a matching folder under app/dashboard/.
+ * Navigation is grouped by product module and built from the active
+ * dictionary. Adding a module means adding a group here, the matching strings,
+ * and a folder under app/[locale]/dashboard/.
  */
-export const NAV_GROUPS: NavGroup[] = [
-  {
-    items: [
-      {
-        href: "/dashboard",
-        label: "Overview",
-        icon: LayoutDashboard,
-        description: "Readiness, open items, and next steps",
-      },
-    ],
-  },
-  {
-    label: "Market-Entry Navigator",
-    blurb: "Work out where to land, what to register, and who to work with.",
-    icon: Map,
-    items: [
-      {
-        href: "/dashboard/guide",
-        label: "Province Guide",
-        icon: Map,
-        description: "Registrations and licences by province",
-      },
-      {
-        href: "/dashboard/assistant",
-        label: "AI Assistant",
-        icon: Bot,
-        description: "Ask anything about entering Canada",
-      },
-      {
-        href: "/dashboard/partners",
-        label: "Partner Matches",
-        icon: Users,
-        description: "Distributors, advisors, and logistics",
-      },
-      {
-        href: "/dashboard/checklist",
-        label: "Compliance Checklist",
-        icon: CheckSquare,
-        description: "Track everything you have to file",
-      },
-    ],
-  },
-  {
-    label: "Funding Copilot",
-    blurb: "Find the grants, credits, and financing you actually qualify for.",
-    icon: Banknote,
-    items: [
-      {
-        href: "/dashboard/funding",
-        label: "Funding Matches",
-        icon: Sparkles,
-        description: "Grants, credits, loans, and subsidies",
-      },
-      {
-        href: "/dashboard/funding/pipeline",
-        label: "Application Pipeline",
-        icon: Banknote,
-        description: "Track applications from draft to award",
-      },
-    ],
-  },
-  {
-    label: "Diaspora Bridge",
-    blurb: "Reach your first customers through the community already here.",
-    icon: Globe2,
-    items: [
-      {
-        href: "/dashboard/diaspora",
-        label: "Community & Networks",
-        icon: Globe2,
-        description: "Chambers, networks, and where your community is",
-      },
-      {
-        href: "/dashboard/diaspora/mentors",
-        label: "Mentors & Advisors",
-        icon: UsersRound,
-        description: "Operators who have made the same move",
-      },
-    ],
-  },
-];
+export function getNavGroups(t: Dictionary): NavGroup[] {
+  const i = t.nav.items;
+  return [
+    {
+      items: [
+        {
+          href: "/dashboard",
+          label: i.overview,
+          icon: LayoutDashboard,
+          description: i.overviewDesc,
+        },
+      ],
+    },
+    {
+      label: t.nav.groups.marketEntry,
+      blurb: t.nav.moduleBlurbs.marketEntry,
+      icon: Map,
+      items: [
+        { href: "/dashboard/guide", label: i.guide, icon: Map, description: i.guideDesc },
+        { href: "/dashboard/assistant", label: i.assistant, icon: Bot, description: i.assistantDesc },
+        { href: "/dashboard/partners", label: i.partners, icon: Users, description: i.partnersDesc },
+        { href: "/dashboard/checklist", label: i.checklist, icon: CheckSquare, description: i.checklistDesc },
+      ],
+    },
+    {
+      label: t.nav.groups.funding,
+      blurb: t.nav.moduleBlurbs.funding,
+      icon: Banknote,
+      items: [
+        { href: "/dashboard/funding", label: i.funding, icon: Sparkles, description: i.fundingDesc },
+        { href: "/dashboard/funding/pipeline", label: i.pipeline, icon: Banknote, description: i.pipelineDesc },
+      ],
+    },
+    {
+      label: t.nav.groups.diaspora,
+      blurb: t.nav.moduleBlurbs.diaspora,
+      icon: Globe2,
+      items: [
+        { href: "/dashboard/diaspora", label: i.diaspora, icon: Globe2, description: i.diasporaDesc },
+        { href: "/dashboard/diaspora/mentors", label: i.mentors, icon: UsersRound, description: i.mentorsDesc },
+      ],
+    },
+  ];
+}
 
-/** Flat list, for anything that needs every destination. */
-export const DASHBOARD_NAV: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
-
-/** Only the module groups — excludes the ungrouped Overview entry. */
-export const MODULE_GROUPS: NavGroup[] = NAV_GROUPS.filter((g) => Boolean(g.label));
+export function getModuleGroups(t: Dictionary): NavGroup[] {
+  return getNavGroups(t).filter((g) => Boolean(g.label));
+}

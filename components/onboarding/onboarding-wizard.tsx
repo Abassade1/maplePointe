@@ -11,9 +11,9 @@ import { StepProduct } from "./step-product";
 import { StepProvinces } from "./step-provinces";
 import { StepGoals } from "./step-goals";
 import { useAppStore } from "@/store/use-app-store";
+import { useI18n, useT } from "@/lib/i18n/provider";
+import { withLocale } from "@/lib/i18n/config";
 import type { CompanySize, EntryGoal, ProductCategory, ProvinceCode } from "@/lib/types";
-
-const STEPS = ["Company", "Product", "Provinces", "Goals"];
 
 export interface OnboardingDraft {
   name: string;
@@ -39,7 +39,16 @@ const INITIAL_DRAFT: OnboardingDraft = {
 
 export function OnboardingWizard() {
   const router = useRouter();
+  const t = useT();
+  const { locale } = useI18n();
   const setCompany = useAppStore((s) => s.setCompany);
+
+  const STEPS = [
+    t.onboarding.steps.company,
+    t.onboarding.steps.product,
+    t.onboarding.steps.provinces,
+    t.onboarding.steps.goals,
+  ];
 
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState<OnboardingDraft>(INITIAL_DRAFT);
@@ -93,7 +102,7 @@ export function OnboardingWizard() {
         goals: draft.goals,
         completedAt: new Date().toISOString(),
       });
-      router.push("/dashboard");
+      router.push(withLocale("/dashboard", locale));
     }, 900);
   }
 
@@ -106,11 +115,9 @@ export function OnboardingWizard() {
     <div>
       <div className="mb-8">
         <h1 className="text-3xl font-semibold tracking-tight text-navy-800">
-          Let&rsquo;s map your entry into Canada
+          {t.onboarding.title}
         </h1>
-        <p className="mt-2 text-slate-600">
-          Four short steps. Everything you enter stays in your browser for this demo.
-        </p>
+        <p className="mt-2 text-slate-600">{t.onboarding.subtitle}</p>
       </div>
 
       <StepIndicator steps={STEPS} current={step} />
@@ -127,23 +134,23 @@ export function OnboardingWizard() {
       <div className="mt-6 flex items-center justify-between">
         <Button variant="ghost" onClick={handleBack} disabled={step === 0 || submitting}>
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-          Back
+          {t.common.back}
         </Button>
 
         <Button onClick={handleNext} disabled={submitting} size="lg">
           {submitting ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-              Building your plan…
+              {t.onboarding.building}
             </>
           ) : step === STEPS.length - 1 ? (
             <>
-              Generate my plan
+              {t.onboarding.generatePlan}
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </>
           ) : (
             <>
-              Continue
+              {t.common.continue}
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </>
           )}

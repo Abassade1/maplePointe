@@ -10,26 +10,36 @@ export function createId(prefix = "id"): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-export function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+export function formatTime(iso: string, tag = "en-CA"): string {
+  return new Date(iso).toLocaleTimeString(tag, { hour: "2-digit", minute: "2-digit" });
 }
 
-/** Compact CAD formatting for funding amounts, e.g. "CA$50K", "CA$3.0M". */
-export function formatCurrency(amount: number): string {
+type Loc = "en" | "fr";
+
+/**
+ * Compact CAD formatting. French Canadian convention puts the symbol after the
+ * number with a non-breaking space: "50 k$ CA" rather than "CA$50K".
+ */
+export function formatCurrency(amount: number, locale: Loc = "en"): string {
+  const fr = locale === "fr";
   if (amount >= 1_000_000) {
-    const millions = amount / 1_000_000;
-    return `CA$${millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)}M`;
+    const m = amount / 1_000_000;
+    const n = m % 1 === 0 ? m.toFixed(0) : m.toFixed(1);
+    return fr ? `${n.replace(".", ",")} M$ CA` : `CA$${n}M`;
   }
-  if (amount >= 1_000) return `CA$${Math.round(amount / 1_000)}K`;
-  return `CA$${amount}`;
+  if (amount >= 1_000) {
+    const k = Math.round(amount / 1_000);
+    return fr ? `${k} k$ CA` : `CA$${k}K`;
+  }
+  return fr ? `${amount} $ CA` : `CA$${amount}`;
 }
 
-export function formatAmountRange(min: number, max: number): string {
-  return `${formatCurrency(min)} – ${formatCurrency(max)}`;
+export function formatAmountRange(min: number, max: number, locale: Loc = "en"): string {
+  return `${formatCurrency(min, locale)} – ${formatCurrency(max, locale)}`;
 }
 
-export function formatDate(date: Date): string {
-  return date.toLocaleDateString("en-CA", {
+export function formatDate(date: Date, tag = "en-CA"): string {
+  return date.toLocaleDateString(tag, {
     weekday: "short",
     day: "numeric",
     month: "short",
@@ -37,8 +47,11 @@ export function formatDate(date: Date): string {
   });
 }
 
-/** e.g. 1860000 -> "1.86M", 62000 -> "62,000" */
-export function formatPopulation(value: number): string {
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(2)}M`;
-  return value.toLocaleString("en-CA");
+/** e.g. 1860000 -> "1.86M" / "1,86 M", 62000 -> "62,000" / "62 000" */
+export function formatPopulation(value: number, tag = "en-CA"): string {
+  if (value >= 1_000_000) {
+    const m = (value / 1_000_000).toFixed(2);
+    return tag.startsWith("fr") ? `${m.replace(".", ",")} M` : `${m}M`;
+  }
+  return value.toLocaleString(tag);
 }

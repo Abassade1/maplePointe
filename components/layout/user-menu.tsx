@@ -1,9 +1,11 @@
 "use client";
 
 import { DEMO_USER } from "@/lib/mock-data";
+import { useT, interpolate } from "@/lib/i18n/provider";
 import { useAppStore } from "@/store/use-app-store";
 
 export function UserMenu() {
+  const t = useT();
   const company = useAppStore((s) => s.company);
 
   return (
@@ -16,7 +18,7 @@ export function UserMenu() {
       </div>
       <span
         className="flex h-9 w-9 items-center justify-center rounded-full bg-navy-600 text-sm font-semibold text-white"
-        aria-label={`Signed in as ${DEMO_USER.name}`}
+        aria-label={interpolate(t.common.signedInAs, { name: DEMO_USER.name })}
       >
         {DEMO_USER.initials}
       </span>

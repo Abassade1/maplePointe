@@ -1,37 +1,30 @@
 "use client";
 
 import { Banknote, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { OnboardingGuard } from "@/components/dashboard/onboarding-guard";
 import { EmptyState } from "@/components/dashboard/empty-state";
-import { ApplicationStatusBadge, FundingTypeBadge } from "./funding-badges";
+import {
+  ApplicationStatusBadge, FundingTypeBadge, applicationStatusLabel,
+} from "./funding-badges";
 import { useSimulatedLoading } from "@/hooks/use-simulated-loading";
 import { useAppStore, selectFundingProgress } from "@/store/use-app-store";
-import {
-  APPLICATION_STATUS_LABELS,
-  APPLICATION_STATUS_ORDER,
-  getProgramById,
-} from "@/lib/mock-funding";
+import { APPLICATION_STATUS_ORDER, getProgramById } from "@/lib/mock-funding";
 import { getProvince } from "@/lib/mock-data";
 import { formatAmountRange, formatCurrency } from "@/lib/utils";
+import { useI18n, useT, interpolate } from "@/lib/i18n/provider";
+import { localizeProgram, localizeProvince } from "@/lib/i18n/localize";
 import type { ApplicationStatus, FundingApplication } from "@/lib/types";
 
 export function FundingPipeline() {
   const loading = useSimulatedLoading();
-
   if (loading) return <PipelineSkeleton />;
-
   return (
     <OnboardingGuard>
       <PipelineContent />
@@ -40,45 +33,38 @@ export function FundingPipeline() {
 }
 
 function PipelineContent() {
+  const t = useT();
+  const { locale } = useI18n();
   const applications = useAppStore((s) => s.fundingApplications);
   const { tracked, submitted, awarded } = selectFundingProgress(applications);
 
   if (tracked === 0) {
     return (
       <div>
-        <PageHeader
-          title="Application Pipeline"
-          description="Every funding programme you are tracking, from first draft through to a decision."
-        />
+        <PageHeader title={t.pipeline.title} description={t.pipeline.subtitle} />
         <EmptyState
           icon={Banknote}
-          title="Your pipeline is empty"
-          description="Open Funding Matches, review a programme, and choose “Track”. Programmes you track appear here so you can move them through to a decision."
-          actionLabel="Browse funding matches"
+          title={t.pipeline.empty.title}
+          description={t.pipeline.empty.body}
+          actionLabel={t.pipeline.empty.cta}
           actionHref="/dashboard/funding"
         />
       </div>
     );
   }
 
-  // Potential value uses the midpoint of each tracked programme's range.
-  const potentialValue = applications.reduce((total, app) => {
-    const program = getProgramById(app.programId);
-    if (!program) return total;
-    return total + (program.minAmount + program.maxAmount) / 2;
-  }, 0);
+  const midpoint = (id: string) => {
+    const p = getProgramById(id);
+    return p ? (p.minAmount + p.maxAmount) / 2 : 0;
+  };
 
+  const potentialValue = applications.reduce((sum, a) => sum + midpoint(a.programId), 0);
   const awardedValue = applications
     .filter((a) => a.status === "awarded")
-    .reduce((total, app) => {
-      const program = getProgramById(app.programId);
-      if (!program) return total;
-      return total + (program.minAmount + program.maxAmount) / 2;
-    }, 0);
+    .reduce((sum, a) => sum + midpoint(a.programId), 0);
 
   const progressPercent = Math.round((submitted / tracked) * 100);
 
-  // Only render lanes that hold something, so the board stays readable.
   const lanes = APPLICATION_STATUS_ORDER.map((status) => ({
     status,
     items: applications.filter((a) => a.status === status),
@@ -86,25 +72,24 @@ function PipelineContent() {
 
   return (
     <div>
-      <PageHeader
-        title="Application Pipeline"
-        description="Every funding programme you are tracking, from first draft through to a decision."
-      />
+      <PageHeader title={t.pipeline.title} description={t.pipeline.subtitle} />
 
       <Card>
         <CardContent className="p-6">
           <div className="grid gap-6 sm:grid-cols-3">
             <div>
-              <p className="text-sm font-medium text-slate-600">Potential value</p>
+              <p className="text-sm font-medium text-slate-600">{t.pipeline.potentialValue}</p>
               <p className="mt-1 text-3xl font-semibold tabular-nums text-navy-800">
-                {formatCurrency(potentialValue)}
+                {formatCurrency(potentialValue, locale)}
               </p>
               <p className="mt-1 text-xs text-slate-500">
-                Across {tracked} tracked programme{tracked === 1 ? "" : "s"}
+                {tracked === 1
+                  ? t.pipeline.acrossTrackedOne
+                  : interpolate(t.pipeline.acrossTracked, { count: tracked })}
               </p>
             </div>
             <div>
-              <p className="text-sm font-medium text-slate-600">Submitted or awarded</p>
+              <p className="text-sm font-medium text-slate-600">{t.pipeline.submittedOrAwarded}</p>
               <p className="mt-1 text-3xl font-semibold tabular-nums text-navy-800">
                 {submitted}
                 <span className="text-lg font-normal text-slate-400"> / {tracked}</span>
@@ -112,18 +97,20 @@ function PipelineContent() {
               <Progress
                 value={progressPercent}
                 className="mt-3"
-                aria-label={`${progressPercent} percent of tracked programmes submitted`}
+                aria-label={interpolate(t.pipeline.submittedAria, { percent: progressPercent })}
               />
             </div>
             <div>
-              <p className="text-sm font-medium text-slate-600">Awarded</p>
+              <p className="text-sm font-medium text-slate-600">{t.pipeline.awarded}</p>
               <p className="mt-1 text-3xl font-semibold tabular-nums text-teal-700">
-                {awarded > 0 ? formatCurrency(awardedValue) : "—"}
+                {awarded > 0 ? formatCurrency(awardedValue, locale) : "—"}
               </p>
               <p className="mt-1 text-xs text-slate-500">
                 {awarded === 0
-                  ? "Nothing awarded yet"
-                  : `${awarded} programme${awarded === 1 ? "" : "s"} awarded`}
+                  ? t.pipeline.nothingAwarded
+                  : awarded === 1
+                    ? t.pipeline.programmeAwarded
+                    : interpolate(t.pipeline.programmesAwarded, { count: awarded })}
               </p>
             </div>
           </div>
@@ -135,10 +122,12 @@ function PipelineContent() {
           <section key={lane.status} aria-labelledby={`lane-${lane.status}`}>
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <h2 id={`lane-${lane.status}`} className="text-lg font-semibold text-navy-800">
-                {APPLICATION_STATUS_LABELS[lane.status]}
+                {applicationStatusLabel(lane.status, t)}
               </h2>
               <p className="text-sm text-slate-500">
-                {lane.items.length} programme{lane.items.length === 1 ? "" : "s"}
+                {lane.items.length === 1
+                  ? t.pipeline.programmeCount
+                  : interpolate(t.pipeline.programmesCount, { count: lane.items.length })}
               </p>
             </div>
             <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
@@ -154,14 +143,16 @@ function PipelineContent() {
 }
 
 function ApplicationRow({ application }: { application: FundingApplication }) {
+  const t = useT();
+  const { locale } = useI18n();
   const setStatus = useAppStore((s) => s.setApplicationStatus);
   const untrack = useAppStore((s) => s.untrackProgram);
-  const program = getProgramById(application.programId);
+  const raw = getProgramById(application.programId);
 
   // Defensive: a persisted application could reference a programme that is gone.
-  if (!program) return null;
-
-  const selectId = `status-${program.id}`;
+  if (!raw) return null;
+  const program = localizeProgram(raw, locale);
+  const selectId = `status-${raw.id}`;
 
   return (
     <li className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center">
@@ -172,32 +163,32 @@ function ApplicationRow({ application }: { application: FundingApplication }) {
         </div>
         <p className="mt-1.5 text-sm text-slate-600">
           {program.provider} ·{" "}
-          {program.level === "federal" ? "Federal" : getProvince(program.province!).name}
+          {program.level === "federal"
+            ? t.funding.federal
+            : localizeProvince(getProvince(program.province!), locale).name}
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <FundingTypeBadge type={program.type} />
           <span className="text-sm tabular-nums text-slate-600">
-            {formatAmountRange(program.minAmount, program.maxAmount)}
+            {formatAmountRange(program.minAmount, program.maxAmount, locale)}
           </span>
         </div>
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
-        <div className="w-full sm:w-[170px]">
+        <div className="w-full sm:w-[190px]">
           <label htmlFor={selectId} className="sr-only">
-            Application status for {program.name}
+            {interpolate(t.pipeline.statusLabelFor, { name: program.name })}
           </label>
           <Select
             value={application.status}
-            onValueChange={(v) => setStatus(program.id, v as ApplicationStatus)}
+            onValueChange={(v) => setStatus(raw.id, v as ApplicationStatus)}
           >
-            <SelectTrigger id={selectId}>
-              <SelectValue />
-            </SelectTrigger>
+            <SelectTrigger id={selectId}><SelectValue /></SelectTrigger>
             <SelectContent>
               {APPLICATION_STATUS_ORDER.map((status) => (
                 <SelectItem key={status} value={status}>
-                  {APPLICATION_STATUS_LABELS[status]}
+                  {applicationStatusLabel(status, t)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -206,9 +197,9 @@ function ApplicationRow({ application }: { application: FundingApplication }) {
 
         <button
           type="button"
-          onClick={() => untrack(program.id)}
+          onClick={() => untrack(raw.id)}
           className="shrink-0 rounded-md p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-600 focus-visible:ring-offset-2"
-          aria-label={`Remove ${program.name} from your pipeline`}
+          aria-label={interpolate(t.pipeline.removeAria, { name: program.name })}
         >
           <Trash2 className="h-4 w-4" aria-hidden="true" />
         </button>

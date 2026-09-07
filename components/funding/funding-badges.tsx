@@ -1,10 +1,36 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
-import { APPLICATION_STATUS_LABELS, FUNDING_TYPE_LABELS } from "@/lib/mock-funding";
+import { useT } from "@/lib/i18n/provider";
+import type { Dictionary } from "@/lib/i18n/dictionaries/en";
 import type { ApplicationStatus, Competitiveness, FundingType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
+export function fundingTypeLabel(type: FundingType, t: Dictionary): string {
+  const map: Record<FundingType, string> = {
+    grant: t.funding.types.grant,
+    loan: t.funding.types.loan,
+    "tax-credit": t.funding.types.taxCredit,
+    "wage-subsidy": t.funding.types.wageSubsidy,
+    "export-financing": t.funding.types.exportFinancing,
+  };
+  return map[type];
+}
+
+export function applicationStatusLabel(status: ApplicationStatus, t: Dictionary): string {
+  const map: Record<ApplicationStatus, string> = {
+    "not-started": t.pipeline.status.notStarted,
+    preparing: t.pipeline.status.preparing,
+    submitted: t.pipeline.status.submitted,
+    awarded: t.pipeline.status.awarded,
+    declined: t.pipeline.status.declined,
+  };
+  return map[status];
+}
+
 export function FundingTypeBadge({ type }: { type: FundingType }) {
-  return <Badge variant="secondary">{FUNDING_TYPE_LABELS[type]}</Badge>;
+  const t = useT();
+  return <Badge variant="secondary">{fundingTypeLabel(type, t)}</Badge>;
 }
 
 const COMPETITIVENESS_STYLES: Record<Competitiveness, string> = {
@@ -13,13 +39,13 @@ const COMPETITIVENESS_STYLES: Record<Competitiveness, string> = {
   high: "border-red-200 bg-red-50 text-red-700",
 };
 
-const COMPETITIVENESS_LABELS: Record<Competitiveness, string> = {
-  low: "Low competition",
-  moderate: "Moderate competition",
-  high: "Highly competitive",
-};
-
 export function CompetitivenessBadge({ level }: { level: Competitiveness }) {
+  const t = useT();
+  const labels: Record<Competitiveness, string> = {
+    low: t.funding.competitiveness.low,
+    moderate: t.funding.competitiveness.moderate,
+    high: t.funding.competitiveness.high,
+  };
   return (
     <span
       className={cn(
@@ -27,7 +53,7 @@ export function CompetitivenessBadge({ level }: { level: Competitiveness }) {
         COMPETITIVENESS_STYLES[level],
       )}
     >
-      {COMPETITIVENESS_LABELS[level]}
+      {labels[level]}
     </span>
   );
 }
@@ -41,6 +67,7 @@ const STATUS_STYLES: Record<ApplicationStatus, string> = {
 };
 
 export function ApplicationStatusBadge({ status }: { status: ApplicationStatus }) {
+  const t = useT();
   return (
     <span
       className={cn(
@@ -48,7 +75,7 @@ export function ApplicationStatusBadge({ status }: { status: ApplicationStatus }
         STATUS_STYLES[status],
       )}
     >
-      {APPLICATION_STATUS_LABELS[status]}
+      {applicationStatusLabel(status, t)}
     </span>
   );
 }

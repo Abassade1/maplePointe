@@ -6,16 +6,20 @@ import { StatusBadge } from "@/components/guide/status-badge";
 import { useAppStore } from "@/store/use-app-store";
 import { getLicenceById } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
+import { useI18n, useT, interpolate } from "@/lib/i18n/provider";
+import { localizeLicence } from "@/lib/i18n/localize";
 import type { ChecklistItem } from "@/lib/types";
 
 export function ChecklistRow({ item }: { item: ChecklistItem }) {
+  const t = useT();
+  const { locale } = useI18n();
   const toggle = useAppStore((s) => s.toggleChecklistItem);
   const remove = useAppStore((s) => s.removeChecklistItem);
-  const licence = getLicenceById(item.licenceId);
+  const raw = getLicenceById(item.licenceId);
 
   // Defensive: a persisted item could reference a licence no longer in mock data.
-  if (!licence) return null;
-
+  if (!raw) return null;
+  const licence = localizeLicence(raw, locale);
   const inputId = `checklist-${item.licenceId}`;
 
   return (
@@ -59,7 +63,7 @@ export function ChecklistRow({ item }: { item: ChecklistItem }) {
         type="button"
         onClick={() => remove(item.licenceId)}
         className="shrink-0 rounded-md p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-600 focus-visible:ring-offset-2"
-        aria-label={`Remove ${licence.name} from your checklist`}
+        aria-label={interpolate(t.checklist.removeAria, { name: licence.name })}
       >
         <Trash2 className="h-4 w-4" aria-hidden="true" />
       </button>

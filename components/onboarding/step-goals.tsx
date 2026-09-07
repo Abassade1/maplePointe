@@ -5,6 +5,7 @@ import type { EntryGoal } from "@/lib/types";
 import { MultiSelectCard } from "./multi-select-card";
 import type { OnboardingDraft } from "./onboarding-wizard";
 import { FieldError, StepHeading } from "./step-shared";
+import { useT } from "@/lib/i18n/provider";
 
 interface StepProps {
   draft: OnboardingDraft;
@@ -13,6 +14,9 @@ interface StepProps {
 }
 
 export function StepGoals({ draft, update, showErrors }: StepProps) {
+  const t = useT();
+  const s = t.onboarding.step4;
+
   function toggle(goal: EntryGoal) {
     const next = draft.goals.includes(goal)
       ? draft.goals.filter((g) => g !== goal)
@@ -22,20 +26,17 @@ export function StepGoals({ draft, update, showErrors }: StepProps) {
 
   return (
     <div>
-      <StepHeading
-        title="What do you most need help with?"
-        description="Select everything that applies. This orders what we surface first on your dashboard."
-      />
+      <StepHeading title={s.title} description={s.description} />
 
       <fieldset className="mt-8">
-        <legend className="sr-only">Market entry goals</legend>
+        <legend className="sr-only">{s.legend}</legend>
         <div className="grid gap-3">
           {ENTRY_GOALS.map((goal) => (
             <MultiSelectCard
               key={goal.value}
               selected={draft.goals.includes(goal.value)}
-              title={goal.label}
-              description={goal.description}
+              title={t.options.goals[goal.value]}
+              description={t.options.goals[`${goal.value}Desc` as keyof typeof t.options.goals]}
               onToggle={() => toggle(goal.value)}
             />
           ))}
@@ -44,7 +45,7 @@ export function StepGoals({ draft, update, showErrors }: StepProps) {
 
       {showErrors && draft.goals.length === 0 && (
         <div className="mt-3">
-          <FieldError>Select at least one goal.</FieldError>
+          <FieldError>{s.error}</FieldError>
         </div>
       )}
     </div>

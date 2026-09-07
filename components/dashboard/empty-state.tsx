@@ -1,6 +1,8 @@
-import Link from "next/link";
+"use client";
+
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LocaleLink } from "@/components/i18n/locale-link";
 
 interface EmptyStateProps {
   icon: LucideIcon;
@@ -11,11 +13,7 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({
-  icon: Icon,
-  title,
-  description,
-  actionLabel,
-  actionHref,
+  icon: Icon, title, description, actionLabel, actionHref,
 }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
@@ -26,7 +24,7 @@ export function EmptyState({
       <p className="mt-2 max-w-md leading-relaxed text-slate-600">{description}</p>
       {actionLabel && actionHref && (
         <Button asChild className="mt-6">
-          <Link href={actionHref}>{actionLabel}</Link>
+          <LocaleLink href={actionHref}>{actionLabel}</LocaleLink>
         </Button>
       )}
     </div>

@@ -9,21 +9,21 @@ import { useToast } from "@/components/ui/toast";
 import { useAppStore } from "@/store/use-app-store";
 import { getProvince } from "@/lib/mock-data";
 import { formatAmountRange } from "@/lib/utils";
+import { useI18n, useT, interpolate } from "@/lib/i18n/provider";
+import { localizeProgram, localizeProvince } from "@/lib/i18n/localize";
 import type { FundingProgram } from "@/lib/types";
 
-export function ProgramCard({ program }: { program: FundingProgram }) {
-  const tracked = useAppStore((s) =>
-    s.fundingApplications.some((a) => a.programId === program.id),
-  );
+export function ProgramCard({ program: raw }: { program: FundingProgram }) {
+  const t = useT();
+  const { locale } = useI18n();
+  const program = localizeProgram(raw, locale);
+  const tracked = useAppStore((s) => s.fundingApplications.some((a) => a.programId === raw.id));
   const trackProgram = useAppStore((s) => s.trackProgram);
   const { toast } = useToast();
 
   function handleTrack() {
-    trackProgram(program);
-    toast(
-      "Added to your pipeline",
-      `${program.name} is now tracked in your funding pipeline.`,
-    );
+    trackProgram(raw);
+    toast(t.funding.trackToast, interpolate(t.funding.trackToastBody, { name: program.name }));
   }
 
   return (
@@ -39,27 +39,27 @@ export function ProgramCard({ program }: { program: FundingProgram }) {
           </div>
           <span
             className="shrink-0 rounded-md bg-teal-50 px-2 py-1 text-center"
-            aria-label={`Match score ${program.matchScore} out of 100`}
+            aria-label={interpolate(t.common.matchScore, { score: program.matchScore })}
           >
             <span className="block text-sm font-semibold tabular-nums leading-none text-teal-700">
               {program.matchScore}
             </span>
             <span className="mt-0.5 block text-[10px] uppercase tracking-wide text-teal-600">
-              match
+              {t.common.match}
             </span>
           </span>
         </div>
 
         <p className="mt-4 text-2xl font-semibold tabular-nums text-navy-800">
-          {formatAmountRange(program.minAmount, program.maxAmount)}
+          {formatAmountRange(program.minAmount, program.maxAmount, locale)}
         </p>
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <FundingTypeBadge type={program.type} />
           <span className="rounded-full border border-slate-300 px-2.5 py-0.5 text-xs text-slate-600">
             {program.level === "federal"
-              ? "Federal"
-              : getProvince(program.province!).name}
+              ? t.funding.federal
+              : localizeProvince(getProvince(program.province!), locale).name}
           </span>
           <CompetitivenessBadge level={program.competitiveness} />
         </div>
@@ -74,7 +74,7 @@ export function ProgramCard({ program }: { program: FundingProgram }) {
         </p>
 
         <div className="mt-5 flex items-center gap-2">
-          <ProgramDetailDialog program={program} />
+          <ProgramDetailDialog program={raw} />
           <Button
             onClick={handleTrack}
             disabled={tracked}
@@ -83,20 +83,14 @@ export function ProgramCard({ program }: { program: FundingProgram }) {
             className="flex-1"
             aria-label={
               tracked
-                ? `${program.name} is already in your pipeline`
-                : `Track ${program.name} in your funding pipeline`
+                ? interpolate(t.funding.trackedAria, { name: program.name })
+                : interpolate(t.funding.trackAria, { name: program.name })
             }
           >
             {tracked ? (
-              <>
-                <Check className="h-4 w-4" aria-hidden="true" />
-                Tracked
-              </>
+              <><Check className="h-4 w-4" aria-hidden="true" />{t.funding.tracked}</>
             ) : (
-              <>
-                <Plus className="h-4 w-4" aria-hidden="true" />
-                Track
-              </>
+              <><Plus className="h-4 w-4" aria-hidden="true" />{t.funding.track}</>
             )}
           </Button>
         </div>

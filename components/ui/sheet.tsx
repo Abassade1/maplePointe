@@ -27,8 +27,11 @@ SheetOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & { title?: string }
->(({ className, children, title = "Navigation", ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
+    title?: string;
+    closeLabel?: string;
+  }
+>(({ className, children, title = "Navigation", closeLabel = "Close navigation", ...props }, ref) => (
   <SheetPortal>
     <SheetOverlay />
     <DialogPrimitive.Content
@@ -40,13 +43,11 @@ const SheetContent = React.forwardRef<
       {...props}
     >
       <DialogPrimitive.Title className="sr-only">{title}</DialogPrimitive.Title>
-      <DialogPrimitive.Description className="sr-only">
-        Main application navigation
-      </DialogPrimitive.Description>
+      <DialogPrimitive.Description className="sr-only">{title}</DialogPrimitive.Description>
       {children}
       <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm p-1 text-slate-500 opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-navy-600">
         <X className="h-5 w-5" />
-        <span className="sr-only">Close navigation</span>
+        <span className="sr-only">{closeLabel}</span>
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
   </SheetPortal>

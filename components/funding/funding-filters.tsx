@@ -4,15 +4,16 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { FUNDING_TYPE_LABELS } from "@/lib/mock-funding";
+import { fundingTypeLabel } from "./funding-badges";
+import { useT } from "@/lib/i18n/provider";
 import type { FundingType } from "@/lib/types";
 import type { LevelFilter, TypeFilter } from "./funding-matches";
+
+const FUNDING_TYPES: FundingType[] = [
+  "grant", "loan", "tax-credit", "wage-subsidy", "export-financing",
+];
 
 interface FundingFiltersProps {
   level: LevelFilter;
@@ -24,42 +25,33 @@ interface FundingFiltersProps {
 }
 
 export function FundingFilters({
-  level,
-  type,
-  onLevelChange,
-  onTypeChange,
-  onReset,
-  showReset,
+  level, type, onLevelChange, onTypeChange, onReset, showReset,
 }: FundingFiltersProps) {
+  const t = useT();
+
   return (
-    <section aria-label="Filter funding programmes" className="rounded-lg border border-slate-200 bg-white p-4">
+    <section aria-label={t.funding.filterLabel} className="rounded-lg border border-slate-200 bg-white p-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
         <div className="w-full space-y-1.5 sm:max-w-[220px]">
-          <Label htmlFor="filter-level">Level of government</Label>
+          <Label htmlFor="filter-level">{t.funding.level}</Label>
           <Select value={level} onValueChange={(v) => onLevelChange(v as LevelFilter)}>
-            <SelectTrigger id="filter-level">
-              <SelectValue />
-            </SelectTrigger>
+            <SelectTrigger id="filter-level"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All levels</SelectItem>
-              <SelectItem value="federal">Federal</SelectItem>
-              <SelectItem value="provincial">Provincial</SelectItem>
+              <SelectItem value="all">{t.funding.allLevels}</SelectItem>
+              <SelectItem value="federal">{t.funding.federal}</SelectItem>
+              <SelectItem value="provincial">{t.funding.provincial}</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="w-full space-y-1.5 sm:max-w-[220px]">
-          <Label htmlFor="filter-funding-type">Funding type</Label>
+          <Label htmlFor="filter-funding-type">{t.funding.fundingType}</Label>
           <Select value={type} onValueChange={(v) => onTypeChange(v as TypeFilter)}>
-            <SelectTrigger id="filter-funding-type">
-              <SelectValue />
-            </SelectTrigger>
+            <SelectTrigger id="filter-funding-type"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All types</SelectItem>
-              {(Object.keys(FUNDING_TYPE_LABELS) as FundingType[]).map((key) => (
-                <SelectItem key={key} value={key}>
-                  {FUNDING_TYPE_LABELS[key]}
-                </SelectItem>
+              <SelectItem value="all">{t.common.allTypes}</SelectItem>
+              {FUNDING_TYPES.map((key) => (
+                <SelectItem key={key} value={key}>{fundingTypeLabel(key, t)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -68,7 +60,7 @@ export function FundingFilters({
         {showReset && (
           <Button variant="ghost" onClick={onReset}>
             <X className="h-4 w-4" aria-hidden="true" />
-            Clear filters
+            {t.common.clearFilters}
           </Button>
         )}
       </div>

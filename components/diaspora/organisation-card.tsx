@@ -6,20 +6,35 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/toast";
 import { useAppStore } from "@/store/use-app-store";
-import { ORG_TYPE_LABELS } from "@/lib/mock-diaspora";
 import { getProvince } from "@/lib/mock-data";
-import type { DiasporaOrganization } from "@/lib/types";
+import { useI18n, useT, interpolate } from "@/lib/i18n/provider";
+import { localizeOrganisation, localizeProvince } from "@/lib/i18n/localize";
+import type { Dictionary } from "@/lib/i18n/dictionaries/en";
+import type { DiasporaOrganization, DiasporaOrgType } from "@/lib/types";
 
-export function OrganisationCard({ organisation }: { organisation: DiasporaOrganization }) {
-  const requested = useAppStore((s) => s.connections.includes(organisation.id));
+export function orgTypeLabel(type: DiasporaOrgType, t: Dictionary): string {
+  const map: Record<DiasporaOrgType, string> = {
+    chamber: t.diaspora.orgTypes.chamber,
+    "business-network": t.diaspora.orgTypes.businessNetwork,
+    "cultural-association": t.diaspora.orgTypes.culturalAssociation,
+    incubator: t.diaspora.orgTypes.incubator,
+  };
+  return map[type];
+}
+
+export function OrganisationCard({ organisation: raw }: { organisation: DiasporaOrganization }) {
+  const t = useT();
+  const { locale, tag } = useI18n();
+  const organisation = localizeOrganisation(raw, locale);
+  const requested = useAppStore((s) => s.connections.includes(raw.id));
   const requestConnection = useAppStore((s) => s.requestConnection);
   const { toast } = useToast();
 
   function handleConnect() {
-    requestConnection(organisation.id);
+    requestConnection(raw.id);
     toast(
-      "Introduction requested",
-      `We'll introduce you to ${organisation.name} and copy you on the message within two business days.`,
+      t.partners.introToast,
+      interpolate(t.diaspora.introToastBody, { name: organisation.name }),
     );
   }
 
@@ -30,14 +45,16 @@ export function OrganisationCard({ organisation }: { organisation: DiasporaOrgan
 
         <p className="mt-1.5 flex items-center gap-1 text-sm text-slate-500">
           <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-          {organisation.city}, {getProvince(organisation.province).name}
+          {organisation.city}, {localizeProvince(getProvince(organisation.province), locale).name}
         </p>
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <Badge variant="secondary">{ORG_TYPE_LABELS[organisation.type]}</Badge>
+          <Badge variant="secondary">{orgTypeLabel(organisation.type, t)}</Badge>
           <span className="inline-flex items-center gap-1 text-xs text-slate-500">
             <Users2 className="h-3.5 w-3.5" aria-hidden="true" />
-            {organisation.memberCount.toLocaleString("en-CA")} members
+            {interpolate(t.diaspora.members, {
+              count: organisation.memberCount.toLocaleString(tag),
+            })}
           </span>
         </div>
 
@@ -45,10 +62,7 @@ export function OrganisationCard({ organisation }: { organisation: DiasporaOrgan
 
         <ul className="mt-4 flex flex-wrap gap-1.5">
           {organisation.focusAreas.map((area) => (
-            <li
-              key={area}
-              className="rounded border border-slate-200 px-2 py-0.5 text-xs text-slate-500"
-            >
+            <li key={area} className="rounded border border-slate-200 px-2 py-0.5 text-xs text-slate-500">
               {area}
             </li>
           ))}
@@ -61,20 +75,14 @@ export function OrganisationCard({ organisation }: { organisation: DiasporaOrgan
           className="mt-5 w-full"
           aria-label={
             requested
-              ? `Introduction already requested with ${organisation.name}`
-              : `Request an introduction to ${organisation.name}`
+              ? interpolate(t.common.introRequestedAria, { name: organisation.name })
+              : interpolate(t.common.requestIntroAria, { name: organisation.name })
           }
         >
           {requested ? (
-            <>
-              <Check className="h-4 w-4" aria-hidden="true" />
-              Intro requested
-            </>
+            <><Check className="h-4 w-4" aria-hidden="true" />{t.common.introRequested}</>
           ) : (
-            <>
-              <Send className="h-4 w-4" aria-hidden="true" />
-              Request intro
-            </>
+            <><Send className="h-4 w-4" aria-hidden="true" />{t.common.requestIntro}</>
           )}
         </Button>
       </CardContent>

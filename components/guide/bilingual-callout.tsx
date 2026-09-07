@@ -1,25 +1,17 @@
+"use client";
+
 import { Languages } from "lucide-react";
+import { useT } from "@/lib/i18n/provider";
 import type { ProvinceCode } from "@/lib/types";
 
-const QUEBEC_COPY = {
-  heading: "French-language requirements apply here",
-  body:
-    "Quebec's Charter of the French Language governs labelling, packaging, warranties, instructions, public signage, websites, and employment documentation. French must appear at least as prominently as any other language, and a non-French trademark on signage needs a sufficient French descriptor alongside it.",
-  action:
-    "Budget CA$1,500–CA$8,000 per SKU family and 6–12 weeks for artwork revision. If your headcount is at or above the Law 14 threshold, you must also register with the OQLF and complete a francisation process.",
-};
-
-const FEDERAL_COPY = {
-  heading: "Bilingual labelling still applies outside Quebec",
-  body:
-    "The federal Consumer Packaging and Labelling Act requires product identity and net quantity declarations in both English and French on consumer prepackaged goods sold anywhere in Canada — including provinces with no French-language legislation of their own.",
-  action:
-    "Design bilingual artwork once, up front. Entrants who produce English-only packaging for a first province routinely pay for a second production run when they expand.",
-};
-
 export function BilingualCallout({ province }: { province: ProvinceCode }) {
-  const copy = province === "QC" ? QUEBEC_COPY : FEDERAL_COPY;
+  const t = useT();
+  const b = t.guide.bilingual;
   const emphasis = province === "QC";
+
+  const copy = emphasis
+    ? { heading: b.quebecHeading, body: b.quebecBody, action: b.quebecAction }
+    : { heading: b.federalHeading, body: b.federalBody, action: b.federalAction };
 
   return (
     <aside

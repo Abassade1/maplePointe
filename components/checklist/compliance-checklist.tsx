@@ -1,29 +1,27 @@
 "use client";
 
-import Link from "next/link";
 import { ArrowRight, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LocaleLink } from "@/components/i18n/locale-link";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { OnboardingGuard } from "@/components/dashboard/onboarding-guard";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { ChecklistRow } from "./checklist-row";
 import { useSimulatedLoading } from "@/hooks/use-simulated-loading";
 import {
-  useAppStore,
-  groupChecklistByProvince,
-  selectChecklistProgress,
+  useAppStore, groupChecklistByProvince, selectChecklistProgress,
 } from "@/store/use-app-store";
 import { getProvince } from "@/lib/mock-data";
+import { useI18n, useT, interpolate } from "@/lib/i18n/provider";
+import { localizeProvince } from "@/lib/i18n/localize";
 import type { ProvinceCode } from "@/lib/types";
 
 export function ComplianceChecklist() {
   const loading = useSimulatedLoading();
-
   if (loading) return <ChecklistSkeleton />;
-
   return (
     <OnboardingGuard>
       <ChecklistContent />
@@ -32,21 +30,20 @@ export function ComplianceChecklist() {
 }
 
 function ChecklistContent() {
+  const t = useT();
+  const { locale } = useI18n();
   const checklist = useAppStore((s) => s.checklist);
   const { total, completed, percent } = selectChecklistProgress(checklist);
 
   if (total === 0) {
     return (
       <div>
-        <PageHeader
-          title="Compliance Checklist"
-          description="Everything you have marked as reviewed, grouped by province and tracked to completion."
-        />
+        <PageHeader title={t.checklist.title} description={t.checklist.subtitle} />
         <EmptyState
           icon={ClipboardList}
-          title="Your checklist is empty"
-          description="Open the Province Guide, expand any licence or registration, and choose “Mark as reviewed”. Items you mark will appear here so you can track them to completion."
-          actionLabel="Go to Province Guide"
+          title={t.checklist.empty.title}
+          description={t.checklist.empty.body}
+          actionLabel={t.checklist.empty.cta}
           actionHref="/dashboard/guide"
         />
       </div>
@@ -58,41 +55,36 @@ function ChecklistContent() {
 
   return (
     <div>
-      <PageHeader
-        title="Compliance Checklist"
-        description="Everything you have marked as reviewed, grouped by province and tracked to completion."
-      >
+      <PageHeader title={t.checklist.title} description={t.checklist.subtitle}>
         <Button asChild variant="outline">
-          <Link href="/dashboard/guide">
-            Add more from the Guide
+          <LocaleLink href="/dashboard/guide">
+            {t.checklist.addMore}
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
-          </Link>
+          </LocaleLink>
         </Button>
       </PageHeader>
 
-      {/* Overall progress */}
       <Card>
         <CardContent className="p-6">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <p className="text-sm font-medium text-slate-600">Overall progress</p>
+              <p className="text-sm font-medium text-slate-600">{t.checklist.overallProgress}</p>
               <p className="mt-1 text-3xl font-semibold tabular-nums text-navy-800">{percent}%</p>
             </div>
             <p className="text-sm text-slate-600">
-              <span className="font-semibold text-navy-800">{completed}</span> of{" "}
-              <span className="font-semibold text-navy-800">{total}</span> items complete
-              {total - completed > 0 && ` · ${total - completed} remaining`}
+              {interpolate(t.checklist.itemsComplete, { done: completed, total })}
+              {total - completed > 0 &&
+                interpolate(t.checklist.remaining, { count: total - completed })}
             </p>
           </div>
           <Progress
             value={percent}
             className="mt-4"
-            aria-label={`Checklist ${percent} percent complete`}
+            aria-label={interpolate(t.checklist.progressAria, { percent })}
           />
         </CardContent>
       </Card>
 
-      {/* Grouped items */}
       <div className="mt-8 space-y-8">
         {provinces.map((code) => {
           const items = grouped[code];
@@ -102,10 +94,10 @@ function ChecklistContent() {
             <section key={code} aria-labelledby={`province-${code}-heading`}>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <h2 id={`province-${code}-heading`} className="text-lg font-semibold text-navy-800">
-                  {getProvince(code).name}
+                  {localizeProvince(getProvince(code), locale).name}
                 </h2>
                 <p className="text-sm text-slate-500">
-                  {done} of {items.length} complete
+                  {interpolate(t.checklist.completeOf, { done, total: items.length })}
                 </p>
               </div>
 

@@ -1,60 +1,30 @@
-import { Banknote, Globe2, Map } from "lucide-react";
+"use client";
 
-const MODULES = [
-  {
-    icon: Map,
-    name: "Market-Entry Navigator",
-    summary:
-      "Work out which province to land in, exactly what you must register, and where bilingual labelling rules apply — then track it all to completion.",
-    points: [
-      "Province-by-province registration guides",
-      "Licence requirements with timelines and fees",
-      "Bilingual and Quebec French compliance",
-      "Vetted distributors, brokers, and advisors",
-    ],
-  },
-  {
-    icon: Banknote,
-    name: "Funding Copilot",
-    summary:
-      "Canada has a dense stack of grants, tax credits, and export financing. Most entrants find out about it far too late, or apply before they are eligible.",
-    points: [
-      "Federal and provincial programmes matched to you",
-      "Plain-language eligibility criteria",
-      "Flags where a Canadian entity is prerequisite",
-      "An application pipeline from draft to award",
-    ],
-  },
-  {
-    icon: Globe2,
-    name: "Diaspora Bridge",
-    summary:
-      "Your community is already here. Diaspora networks are consistently the fastest route to a first Canadian customer and to advice from people who made the same move.",
-    points: [
-      "Where your community sits, province by province",
-      "Chambers, business networks, and incubators",
-      "Mentors who have run the same playbook",
-      "Showcases, clinics, and buyer roundtables",
-    ],
-  },
-];
+import { Banknote, Globe2, Map } from "lucide-react";
+import { useT } from "@/lib/i18n/provider";
 
 export function Modules() {
+  const t = useT();
+  const m = t.landing.modules;
+
+  const modules = [
+    { icon: Map, name: m.m1, summary: m.m1Summary, points: m.m1Points },
+    { icon: Banknote, name: m.m2, summary: m.m2Summary, points: m.m2Points },
+    { icon: Globe2, name: m.m3, summary: m.m3Summary, points: m.m3Points },
+  ];
+
   return (
     <section id="modules" className="border-b border-slate-200 py-20 lg:py-24">
       <div className="container">
         <div className="max-w-2xl">
           <h2 className="text-3xl font-semibold tracking-tight text-navy-800 sm:text-4xl">
-            Three modules, one entry plan
+            {m.title}
           </h2>
-          <p className="mt-4 text-lg leading-relaxed text-slate-600">
-            Each answers a different question, and they share the same profile — so what you
-            complete in one shows up in the next.
-          </p>
+          <p className="mt-4 text-lg leading-relaxed text-slate-600">{m.subtitle}</p>
         </div>
 
         <ul className="mt-14 grid gap-6 lg:grid-cols-3">
-          {MODULES.map((module) => (
+          {modules.map((module) => (
             <li
               key={module.name}
               className="flex flex-col rounded-lg border border-slate-200 bg-white p-6"

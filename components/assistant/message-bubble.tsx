@@ -1,7 +1,10 @@
+"use client";
+
 import { Bot } from "lucide-react";
 import { DEMO_USER } from "@/lib/mock-data";
 import type { ChatMessage } from "@/lib/types";
 import { cn, formatTime } from "@/lib/utils";
+import { useI18n, useT } from "@/lib/i18n/provider";
 
 /** Renders the mock assistant's lightweight markdown: **bold**, lists, and paragraphs. */
 function renderContent(content: string) {
@@ -50,6 +53,8 @@ function renderInline(text: string) {
 }
 
 export function MessageBubble({ message }: { message: ChatMessage }) {
+  const t = useT();
+  const { tag } = useI18n();
   const isUser = message.role === "user";
 
   return (
@@ -65,7 +70,9 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
       </span>
 
       <div className={cn("min-w-0 max-w-[46rem]", isUser && "flex flex-col items-end")}>
-        <span className="sr-only">{isUser ? "You said:" : "Assistant replied:"}</span>
+        <span className="sr-only">
+          {isUser ? t.assistant.youSaid : t.assistant.assistantReplied}
+        </span>
         <div
           className={cn(
             "rounded-lg px-4 py-3 text-sm",
@@ -84,7 +91,7 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
           dateTime={message.timestamp}
           className="mt-1.5 block px-1 text-xs text-slate-400"
         >
-          {formatTime(message.timestamp)}
+          {formatTime(message.timestamp, tag)}
         </time>
       </div>
     </li>

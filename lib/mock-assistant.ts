@@ -4,6 +4,13 @@
  * No network calls — this exists so the demo behaves believably without a backend.
  */
 
+import type { Locale } from "./i18n/config";
+import {
+  FR_ASSISTANT_ANSWERS,
+  FR_KEYWORDS,
+  FR_SUGGESTED_QUESTIONS,
+} from "./i18n/content/fr-assistant";
+
 interface ResponseRule {
   id: string;
   /** Lower-cased keywords; any match scores the rule. */
@@ -82,15 +89,21 @@ const RULES: ResponseRule[] = [
 const FALLBACK =
   "I can help you think that through. I have the most useful detail on:\n\n- **Registration and licensing** — what to file, in what order, and how long each step takes\n- **Sales tax** — how HST, GST, PST, and QST differ by province and what that does to your pricing\n- **Labelling and bilingual compliance** — federal requirements and Quebec's stricter French-language regime\n- **Choosing a province** — matching your supply chain and buyer to the right landing point\n- **Partners** — when a distributor beats a commission agent, and what to negotiate\n- **Costs and timelines** — realistic first-year budgets and a week-by-week sequence\n\nCould you tell me a bit more about what you are trying to decide? If you mention your product type and which provinces you are considering, I can be more specific.";
 
-/** Scores every rule against the question and returns the best match, or a fallback. */
-export function getAssistantResponse(question: string): string {
+/**
+ * Scores every rule against the question and returns the best match, or a
+ * fallback. Matching considers both the English keywords and the locale's own,
+ * so a French question routes correctly even if it borrows an English term.
+ */
+export function getAssistantResponse(question: string, locale: Locale = "en"): string {
   const q = question.toLowerCase();
 
   let best: ResponseRule | null = null;
   let bestScore = 0;
 
   for (const rule of RULES) {
-    const hits = rule.keywords.filter((k) => q.includes(k)).length;
+    const localeKeywords = locale === "fr" ? (FR_KEYWORDS[rule.id] ?? []) : [];
+    const keywords = [...rule.keywords, ...localeKeywords];
+    const hits = keywords.filter((k) => q.includes(k)).length;
     if (hits === 0) continue;
     const score = hits * rule.weight;
     if (score > bestScore) {
@@ -99,10 +112,19 @@ export function getAssistantResponse(question: string): string {
     }
   }
 
+  if (locale === "fr") {
+    return best
+      ? (FR_ASSISTANT_ANSWERS[best.id] ?? best.answer)
+      : (FR_ASSISTANT_ANSWERS.fallback ?? FALLBACK);
+  }
   return best ? best.answer : FALLBACK;
 }
 
 /** Starter prompts surfaced as chips above the composer. */
+export function getSuggestedQuestions(locale: Locale): readonly string[] {
+  return locale === "fr" ? FR_SUGGESTED_QUESTIONS : SUGGESTED_QUESTIONS;
+}
+
 export const SUGGESTED_QUESTIONS = [
   "Which province should we enter first?",
   "What are the Quebec French labelling requirements?",

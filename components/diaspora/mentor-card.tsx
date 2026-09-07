@@ -6,27 +6,31 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/toast";
 import { useAppStore } from "@/store/use-app-store";
 import { getProvince } from "@/lib/mock-data";
+import { useI18n, useT, interpolate } from "@/lib/i18n/provider";
+import { localizeMentor, localizeProvince } from "@/lib/i18n/localize";
+import { FR_LANGUAGES } from "@/lib/i18n/content/fr-module3";
 import type { DiasporaMentor } from "@/lib/types";
 
 function initials(name: string): string {
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .slice(0, 2)
-    .join("");
+  return name.split(" ").map((p) => p[0]).slice(0, 2).join("");
 }
 
-export function MentorCard({ mentor }: { mentor: DiasporaMentor }) {
-  const requested = useAppStore((s) => s.connections.includes(mentor.id));
+export function MentorCard({ mentor: raw }: { mentor: DiasporaMentor }) {
+  const t = useT();
+  const { locale } = useI18n();
+  const mentor = localizeMentor(raw, locale);
+  const requested = useAppStore((s) => s.connections.includes(raw.id));
   const requestConnection = useAppStore((s) => s.requestConnection);
   const { toast } = useToast();
 
+  const languages =
+    locale === "fr"
+      ? mentor.languages.map((l) => FR_LANGUAGES[l] ?? l)
+      : mentor.languages;
+
   function handleConnect() {
-    requestConnection(mentor.id);
-    toast(
-      "Introduction requested",
-      `We'll ask ${mentor.name} for a 30-minute introductory call and copy you on the message.`,
-    );
+    requestConnection(raw.id);
+    toast(t.partners.introToast, interpolate(t.mentors.introToastBody, { name: mentor.name }));
   }
 
   return (
@@ -49,13 +53,13 @@ export function MentorCard({ mentor }: { mentor: DiasporaMentor }) {
           </div>
           <span
             className="shrink-0 rounded-md bg-teal-50 px-2 py-1 text-center"
-            aria-label={`Match score ${mentor.matchScore} out of 100`}
+            aria-label={interpolate(t.common.matchScore, { score: mentor.matchScore })}
           >
             <span className="block text-sm font-semibold tabular-nums leading-none text-teal-700">
               {mentor.matchScore}
             </span>
             <span className="mt-0.5 block text-[10px] uppercase tracking-wide text-teal-600">
-              match
+              {t.common.match}
             </span>
           </span>
         </div>
@@ -63,19 +67,16 @@ export function MentorCard({ mentor }: { mentor: DiasporaMentor }) {
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-slate-500">
           <span className="flex items-center gap-1">
             <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            {mentor.city}, {getProvince(mentor.province).name}
+            {mentor.city}, {localizeProvince(getProvince(mentor.province), locale).name}
           </span>
-          <span>{mentor.yearsInCanada} years in Canada</span>
+          <span>{interpolate(t.mentors.yearsInCanada, { years: mentor.yearsInCanada })}</span>
         </div>
 
         <p className="mt-4 flex-1 text-sm leading-relaxed text-slate-600">{mentor.blurb}</p>
 
         <ul className="mt-4 flex flex-wrap gap-1.5">
           {mentor.expertise.map((area) => (
-            <li
-              key={area}
-              className="rounded border border-slate-200 px-2 py-0.5 text-xs text-slate-500"
-            >
+            <li key={area} className="rounded border border-slate-200 px-2 py-0.5 text-xs text-slate-500">
               {area}
             </li>
           ))}
@@ -83,7 +84,7 @@ export function MentorCard({ mentor }: { mentor: DiasporaMentor }) {
 
         <p className="mt-3 flex items-center gap-1.5 text-xs text-slate-500">
           <Languages className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-          {mentor.languages.join(", ")}
+          {languages.join(", ")}
         </p>
 
         <Button
@@ -93,20 +94,14 @@ export function MentorCard({ mentor }: { mentor: DiasporaMentor }) {
           className="mt-5 w-full"
           aria-label={
             requested
-              ? `Introduction already requested with ${mentor.name}`
-              : `Request an introduction to ${mentor.name}`
+              ? interpolate(t.common.introRequestedAria, { name: mentor.name })
+              : interpolate(t.common.requestIntroAria, { name: mentor.name })
           }
         >
           {requested ? (
-            <>
-              <Check className="h-4 w-4" aria-hidden="true" />
-              Intro requested
-            </>
+            <><Check className="h-4 w-4" aria-hidden="true" />{t.common.introRequested}</>
           ) : (
-            <>
-              <Send className="h-4 w-4" aria-hidden="true" />
-              Request intro
-            </>
+            <><Send className="h-4 w-4" aria-hidden="true" />{t.common.requestIntro}</>
           )}
         </Button>
       </CardContent>

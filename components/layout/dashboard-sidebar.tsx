@@ -1,13 +1,17 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { NAV_GROUPS } from "@/lib/navigation";
+import { LocaleLink } from "@/components/i18n/locale-link";
+import { getNavGroups } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n/provider";
+import { stripLocale } from "@/lib/i18n/config";
 import { useAppStore, selectChecklistProgress } from "@/store/use-app-store";
 
 export function DashboardNav({ onNavigate }: { onNavigate?: () => void }) {
-  const pathname = usePathname();
+  const t = useT();
+  // Compare against the locale-less path so active states work in every locale.
+  const pathname = stripLocale(usePathname());
   const checklist = useAppStore((s) => s.checklist);
   const applications = useAppStore((s) => s.fundingApplications);
 
@@ -23,8 +27,8 @@ export function DashboardNav({ onNavigate }: { onNavigate?: () => void }) {
   }
 
   return (
-    <nav aria-label="Dashboard" className="space-y-6">
-      {NAV_GROUPS.map((group, groupIndex) => (
+    <nav aria-label={t.nav.dashboard} className="space-y-6">
+      {getNavGroups(t).map((group, groupIndex) => (
         <div key={group.label ?? `group-${groupIndex}`}>
           {group.label && (
             <h2 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
@@ -33,8 +37,10 @@ export function DashboardNav({ onNavigate }: { onNavigate?: () => void }) {
           )}
           <ul className="space-y-1">
             {group.items.map((item) => {
-              // Exact match for index routes so a child route does not light up its parent.
-              const isIndex = item.href === "/dashboard" || item.href === "/dashboard/funding" || item.href === "/dashboard/diaspora";
+              const isIndex =
+                item.href === "/dashboard" ||
+                item.href === "/dashboard/funding" ||
+                item.href === "/dashboard/diaspora";
               const active = isIndex
                 ? pathname === item.href
                 : pathname.startsWith(item.href);
@@ -42,7 +48,7 @@ export function DashboardNav({ onNavigate }: { onNavigate?: () => void }) {
 
               return (
                 <li key={item.href}>
-                  <Link
+                  <LocaleLink
                     href={item.href}
                     onClick={onNavigate}
                     aria-current={active ? "page" : undefined}
@@ -66,7 +72,7 @@ export function DashboardNav({ onNavigate }: { onNavigate?: () => void }) {
                         {badge}
                       </span>
                     )}
-                  </Link>
+                  </LocaleLink>
                 </li>
               );
             })}

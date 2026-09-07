@@ -8,6 +8,8 @@ A clickable, demo-ready frontend for Northgate AI, covering all three modules:
 
 Built for foreign SMEs working out how to enter the Canadian market.
 
+Fully bilingual: **English and Canadian French**, including all mock content.
+
 No backend. All data is mocked and all state is client-side.
 
 ## Running it
@@ -17,7 +19,9 @@ npm install
 npm run dev
 ```
 
-Then open http://localhost:3000.
+Then open http://localhost:3000 — you are redirected to `/en` or `/fr` based on your
+browser's `Accept-Language`. Use the switcher in the header to change language; it keeps you
+on the same page, so `/fr/dashboard/guide` is a shareable link.
 
 ## Demo path
 
@@ -51,6 +55,25 @@ Two things worth showing in a demo, because they make the modules feel like one 
 
 To reset the demo, clear the `northgate-ai-store` key from local storage.
 
+## Languages
+
+English and Canadian French are both complete — UI strings, province guides, licence
+descriptions, funding programmes, diaspora content, and the assistant's canned answers. The
+assistant matches French keywords too, so a question written entirely in French routes to the
+right answer. Numbers and currency follow each locale's conventions (`CA$36.7M` / `36,7 M$ CA`).
+
+### Adding a third language
+
+1. Add the code to `LOCALES` in `lib/i18n/config.ts`, with its name and BCP 47 tag.
+2. Copy `lib/i18n/dictionaries/fr.ts` to `<code>.ts` and translate it — TypeScript will flag
+   any key you miss.
+3. Register it in `lib/i18n/get-dictionary.ts`.
+4. Optionally add a content overlay under `lib/i18n/content/` and a branch in
+   `lib/i18n/localize.ts`. Without one, that locale falls back to the English mock content
+   while the UI is still translated.
+
+Routing, the switcher, static generation, and `lang` handling all pick it up automatically.
+
 ## Stack
 
 Next.js 14 (App Router) · TypeScript · Tailwind CSS · shadcn/ui-style components on Radix ·
@@ -59,15 +82,17 @@ lucide-react · Zustand (persisted to local storage).
 ## Structure
 
 ```
-app/                    Routes (landing, onboarding, dashboard + 4 sub-screens)
+app/[locale]/           All routes, prerendered per locale (/en/…, /fr/…)
+middleware.ts           Redirects locale-less paths, honouring Accept-Language
+lib/i18n/               Config, dictionaries, content overlays, merge helpers
 components/ui/          Base primitives (button, card, select, accordion, sheet, toast, …)
 components/<feature>/   Feature components, one folder per screen
 lib/types.ts            Domain model for all three modules
 lib/mock-data.ts        Module 1 data + re-exports of the two below
 lib/mock-funding.ts     Module 2 — 15 federal and provincial programmes
 lib/mock-diaspora.ts    Module 3 — communities, organisations, mentors, events
-lib/mock-assistant.ts   Keyword-matched response engine for the chat
-lib/navigation.ts       Module-grouped navigation
+lib/mock-assistant.ts   Keyword-matched response engine (English + French keywords)
+lib/navigation.ts       Module-grouped navigation, built from the active dictionary
 store/use-app-store.ts  Zustand store + derived selectors
 ```
 

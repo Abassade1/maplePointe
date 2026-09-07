@@ -1,6 +1,7 @@
 "use client";
 
-import { SUGGESTED_QUESTIONS } from "@/lib/mock-assistant";
+import { getSuggestedQuestions } from "@/lib/mock-assistant";
+import { useI18n, useT } from "@/lib/i18n/provider";
 
 interface SuggestedQuestionsProps {
   onSelect: (question: string) => void;
@@ -8,11 +9,14 @@ interface SuggestedQuestionsProps {
 }
 
 export function SuggestedQuestions({ onSelect, disabled }: SuggestedQuestionsProps) {
+  const t = useT();
+  const { locale } = useI18n();
+
   return (
     <div>
-      <h2 className="sr-only">Suggested questions</h2>
+      <h2 className="sr-only">{t.assistant.suggested}</h2>
       <ul className="flex flex-wrap gap-2">
-        {SUGGESTED_QUESTIONS.map((question) => (
+        {getSuggestedQuestions(locale).map((question) => (
           <li key={question}>
             <button
               type="button"

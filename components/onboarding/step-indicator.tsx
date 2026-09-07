@@ -1,5 +1,8 @@
+"use client";
+
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useT, interpolate } from "@/lib/i18n/provider";
 
 interface StepIndicatorProps {
   steps: string[];
@@ -7,15 +10,18 @@ interface StepIndicatorProps {
 }
 
 export function StepIndicator({ steps, current }: StepIndicatorProps) {
+  const t = useT();
   const percent = Math.round(((current + 1) / steps.length) * 100);
 
   return (
     <div>
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-slate-600">
-          Step {current + 1} of {steps.length}
+          {interpolate(t.onboarding.stepOf, { current: current + 1, total: steps.length })}
         </p>
-        <p className="text-sm text-slate-500">{percent}% complete</p>
+        <p className="text-sm text-slate-500">
+          {interpolate(t.onboarding.percentComplete, { percent })}
+        </p>
       </div>
 
       <div
@@ -24,7 +30,7 @@ export function StepIndicator({ steps, current }: StepIndicatorProps) {
         aria-valuenow={percent}
         aria-valuemin={0}
         aria-valuemax={100}
-        aria-label="Onboarding progress"
+        aria-label={t.onboarding.progressLabel}
       >
         <div
           className="h-full rounded-full bg-teal-500 transition-all duration-300"
