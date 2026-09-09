@@ -1,0 +1,127 @@
+// Northgate AI — backend data model.
+// Mirrors the frontend types in lib/types.ts.
+// Modules 2 (Funding Copilot) and 3 (Diaspora Bridge) are deliberately not
+// modelled yet; they slot in as new models + route groups without touching this.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum LicenceStatus {
+  required
+  recommended
+  not_applicable
+}
+
+enum PartnerType {
+  distributor
+  legal_advisor
+  logistics
+  local_agent
+}
+
+enum ChatRole {
+  user
+  assistant
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  companyId    String
+  createdAt    DateTime @default(now())
+
+  company        Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  checklistItems ChecklistItem[]
+  chatMessages   ChatMessage[]
+
+  @@index([companyId])
+}
+
+model Company {
+  id                 String   @id @default(cuid())
+  name               String
+  industry           String
+  homeCountry        String
+  companySize        String
+  productDescription String   @default("")
+  productCategory    String   @default("")
+  /// Province codes, e.g. ["ON", "BC"]
+  targetProvinces    String[] @default([])
+  /// e.g. ["understand_licensing", "estimate_costs"]
+  goals              String[] @default([])
+  createdAt          DateTime @default(now())
+
+  users User[]
+}
+
+model Province {
+  id           String @id @default(cuid())
+  code         String @unique
+  name         String
+  overviewText String
+
+  licenceItems LicenceItem[]
+  partners     Partner[]
+}
+
+model LicenceItem {
+  id          String        @id @default(cuid())
+  provinceId  String
+  name        String
+  description String
+  status      LicenceStatus
+  category    String
+
+  province       Province        @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+  checklistItems ChecklistItem[]
+
+  @@index([provinceId])
+}
+
+model ChecklistItem {
+  id            String    @id @default(cuid())
+  userId        String
+  licenceItemId String
+  completed     Boolean   @default(false)
+  completedAt   DateTime?
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  licenceItem LicenceItem @relation(fields: [licenceItemId], references: [id], onDelete: Cascade)
+
+  // One row per user per licence item — the toggle endpoint upserts on this.
+  @@unique([userId, licenceItemId])
+  @@index([userId])
+}
+
+model Partner {
+  id           String      @id @default(cuid())
+  name         String
+  type         PartnerType
+  provinceId   String
+  blurb        String
+  contactEmail String
+
+  province Province @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+
+  @@index([provinceId])
+  @@index([type])
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  role      ChatRole
+  content   String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}

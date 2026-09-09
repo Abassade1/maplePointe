@@ -1,0 +1,136 @@
+### Northgate AI — API collection
+### Works with the VS Code "REST Client" extension and JetBrains HTTP Client.
+### Run the requests top to bottom: signup captures the JWT into @token,
+### and the province request captures a licence id.
+
+@baseUrl = http://localhost:3000/api
+@email = amara@example.com
+@password = correct-horse-battery
+
+### ---------------------------------------------------------------- Auth ----
+
+# @name signup
+POST {{baseUrl}}/auth/signup
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}",
+  "company": {
+    "name": "Kanto Devices KK",
+    "industry": "Manufacturing",
+    "homeCountry": "Japan",
+    "companySize": "51-200"
+  }
+}
+
+###
+
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+@token = {{login.response.body.token}}
+
+###
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{token}}
+
+### ------------------------------------------------------------- Company ----
+
+PATCH {{baseUrl}}/company
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "productDescription": "Precision industrial sensors and control modules for factory automation.",
+  "productCategory": "industrial-equipment",
+  "targetProvinces": ["ON", "BC"],
+  "goals": ["understand_licensing", "find_distribution_partners"]
+}
+
+### --------------------------------------------------- Provinces & licences --
+
+GET {{baseUrl}}/provinces
+
+###
+
+# @name ontario
+GET {{baseUrl}}/provinces/ON
+
+@licenceId = {{ontario.response.body.province.licenceItems.0.id}}
+
+###
+# Send with an Authorization header to get per-user checklist state inline.
+GET {{baseUrl}}/provinces/BC
+Authorization: Bearer {{token}}
+
+###
+# Toggle a licence item onto the checklist. Empty body flips the current value.
+PATCH {{baseUrl}}/licence-items/{{licenceId}}/checklist
+Authorization: Bearer {{token}}
+
+###
+# Or set it explicitly.
+PATCH {{baseUrl}}/licence-items/{{licenceId}}/checklist
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "completed": true }
+
+### ----------------------------------------------------------- Checklist ----
+
+GET {{baseUrl}}/checklist
+Authorization: Bearer {{token}}
+
+### ------------------------------------------------------------ Partners ----
+
+GET {{baseUrl}}/partners
+
+###
+GET {{baseUrl}}/partners?province=BC
+
+###
+GET {{baseUrl}}/partners?province=AB&type=legal_advisor
+
+### ----------------------------------------------------------- Assistant ----
+### Requires ANTHROPIC_API_KEY in .env, otherwise returns 503.
+
+POST {{baseUrl}}/assistant
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "message": "Which province should we enter first, and what do we register?" }
+
+###
+POST {{baseUrl}}/assistant
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "message": "What are the bilingual labelling rules we need to plan for?" }
+
+###
+GET {{baseUrl}}/assistant/history
+Authorization: Bearer {{token}}
+
+### -------------------------------------------------------- Error shapes ----
+
+### 400 — validation, with per-field messages
+POST {{baseUrl}}/auth/signup
+Content-Type: application/json
+
+{ "email": "not-an-email", "password": "short", "company": { "name": "" } }
+
+### 401 — missing token
+GET {{baseUrl}}/auth/me
+
+### 404 — unknown province
+GET {{baseUrl}}/provinces/ZZ
+
+### 400 — invalid query enum
+GET {{baseUrl}}/partners?type=banana
